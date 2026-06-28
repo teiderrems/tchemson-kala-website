@@ -1,0 +1,288 @@
+    <section [id]="section.key" class="py-12 sm:py-16 lg:py-20" [ngClass]="{ 'bg-surface-container-low/60': section.key === 'admissions' || section.key === 'life' }" [ngStyle]="backgroundStyle()" appScrollReveal>
+      <div class="container-page">
+        <div class="mb-8 flex flex-col justify-between gap-5 sm:mb-12 lg:flex-row lg:items-end">
+          <div class="max-w-3xl">
+            <h2 class="font-display text-2xl font-bold leading-tight text-primary sm:text-3xl md:text-4xl">{{ title() }}</h2>
+            <p class="mt-3 leading-7 text-on-surface-variant">{{ subtitle() }}</p>
+          </div>
+          <span class="hidden font-display text-7xl font-extrabold text-primary-container/10 lg:block">{{ section.key | uppercase }}</span>
+        </div>
+
+        <ng-container [ngSwitch]="section.kind">
+          <div *ngSwitchCase="'cards'" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <article *ngFor="let item of arrayContent('items')" class="rounded-3xl border border-outline-variant/30 bg-white p-5 shadow-sm sm:p-7">
+              <span class="material-symbols-outlined mb-5 rounded-2xl bg-secondary-container p-3 text-3xl text-white">{{ item.icon }}</span>
+              <h3 class="font-display text-xl font-bold text-primary">{{ text(item.title) }}</h3>
+              <p class="mt-3 leading-7 text-on-surface-variant">{{ text(item.text) }}</p>
+            </article>
+          </div>
+
+          <div *ngSwitchCase="'admissions'" class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div class="rounded-3xl bg-white p-5 shadow-sm sm:rounded-4xl sm:p-8 lg:col-span-2">
+              <h3 class="font-display text-xl font-bold text-secondary sm:text-2xl">{{ 'section.requiredDocuments' | translate }}</h3>
+              <ul class="mt-6 grid gap-4 md:grid-cols-2">
+                <li *ngFor="let requirement of arrayContent('requirements')" class="flex gap-3 rounded-xl border border-outline-variant/40 p-4">
+                  <span class="material-symbols-outlined shrink-0 text-primary">check_circle</span>
+                  <span>{{ text(requirement) }}</span>
+                </li>
+              </ul>
+            </div>
+            <aside class="rounded-3xl bg-surface-container-highest p-5 shadow-sm sm:rounded-4xl sm:p-8">
+              <div class="text-sm font-bold uppercase text-on-surface-variant">{{ 'section.registrationFee' | translate }}</div>
+              <div class="mt-2 wrap-break-word font-display text-2xl font-extrabold text-primary sm:text-3xl">{{ content('registrationFee') }}</div>
+              <div class="mt-8 space-y-5">
+                <div *ngFor="let payment of arrayContent('payments')" class="border-l-4 border-primary pl-4">
+                  <div class="font-display font-bold">{{ text(payment.label) }}</div>
+                  <div class="text-xl font-extrabold text-secondary">{{ payment.amount }}</div>
+                  <div class="text-sm text-on-surface-variant">{{ payment.deadline }}</div>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <div *ngSwitchCase="'services'" class="space-y-10 sm:space-y-14">
+            <div class="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12">
+              <div class="space-y-6">
+                <span class="inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-bold text-on-primary">
+                  <span class="material-symbols-outlined text-lg">verified</span>
+                  {{ content('badge') || ('section.bilingualExcellence' | translate) }}
+                </span>
+                <p class="max-w-2xl text-lg leading-8 text-on-surface-variant">{{ subtitle() }}</p>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <article *ngFor="let highlight of arrayContent('highlights')" class="rounded-2xl bg-white p-5 shadow-sm">
+                    <span class="material-symbols-outlined text-3xl text-secondary">{{ highlight.icon }}</span>
+                    <h3 class="mt-3 font-display text-lg font-bold text-primary">{{ text(highlight.title) }}</h3>
+                    <p class="mt-2 text-sm leading-6 text-on-surface-variant">{{ text(highlight.text) }}</p>
+                  </article>
+                </div>
+              </div>
+              <img class="aspect-4/3 w-full rounded-3xl object-cover shadow-xl sm:rounded-4xl" [src]="section.media?.url" [alt]="section.media?.alt_text">
+            </div>
+
+            <div>
+              <div class="mb-8 text-center">
+                <h3 class="font-display text-2xl font-bold text-primary sm:text-3xl">{{ 'section.team' | translate }}</h3>
+                <div class="mx-auto mt-4 h-1 w-24 rounded-full bg-secondary"></div>
+              </div>
+              <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <article *ngFor="let member of arrayContent('team')" class="rounded-3xl border border-outline-variant/30 bg-white p-6 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+                  <div class="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-primary/20 bg-surface-container-low text-primary">
+                    <img *ngIf="member.photoUrl; else teamMemberIcon" class="h-full w-full object-cover" [src]="member.photoUrl" [alt]="member.photoAlt || member.name">
+                    <ng-template #teamMemberIcon>
+                      <span class="material-symbols-outlined text-5xl">{{ member.icon || 'person' }}</span>
+                    </ng-template>
+                  </div>
+                  <h4 class="mt-5 font-display text-xl font-bold text-primary">{{ text(member.name) }}</h4>
+                  <p class="mt-2 text-sm font-bold uppercase text-secondary">{{ text(member.role) }}</p>
+                  <p class="mt-4 leading-7 text-on-surface-variant">{{ text(member.bio) }}</p>
+                  <div class="mt-5 flex flex-wrap justify-center gap-2">
+                    <span *ngFor="let skill of member.skills" class="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{{ text(skill) }}</span>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <article *ngFor="let service of arrayContent('services')" class="rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+                <div class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary-container text-white">
+                  <span class="material-symbols-outlined text-3xl">{{ service.icon }}</span>
+                </div>
+                <h3 class="font-display text-2xl font-bold text-primary">{{ text(service.title) }}</h3>
+                <p class="mt-3 leading-7 text-on-surface-variant">{{ text(service.text) }}</p>
+                <ul class="mt-6 space-y-3">
+                  <li *ngFor="let point of service.points" class="flex gap-3">
+                    <span class="material-symbols-outlined shrink-0 text-primary">check_circle</span>
+                    <span class="text-on-surface-variant">{{ text(point) }}</span>
+                  </li>
+                </ul>
+              </article>
+            </div>
+
+            <div class="rounded-3xl bg-surface-container-high p-5 sm:rounded-4xl sm:p-8">
+              <h3 class="font-display text-2xl font-bold text-primary">{{ 'section.faq' | translate }}</h3>
+              <div class="mt-6 grid gap-4">
+                <details *ngFor="let item of arrayContent('faqs'); let first = first" class="group rounded-2xl bg-white shadow-sm" [open]="first">
+                  <summary class="flex cursor-pointer list-none items-center justify-between gap-4 p-5 font-bold text-primary">
+                    <span>{{ text(item.question) }}</span>
+                    <span class="material-symbols-outlined transition group-open:rotate-180">expand_more</span>
+                  </summary>
+                  <p class="border-t border-outline-variant/20 px-5 pb-5 pt-4 leading-7 text-on-surface-variant">{{ text(item.answer) }}</p>
+                </details>
+              </div>
+            </div>
+          </div>
+
+          <div *ngSwitchCase="'life'" class="space-y-10 sm:space-y-14">
+            <div class="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12">
+              <div class="space-y-6">
+                <span class="inline-block rounded-full bg-secondary-container px-4 py-2 text-sm font-bold text-on-surface">{{ 'section.activities' | translate }}</span>
+                <h3 class="font-display text-3xl font-extrabold leading-tight text-primary sm:text-4xl">{{ 'section.lifeHeadline' | translate }}</h3>
+                <p class="text-lg leading-8 text-on-surface-variant">{{ subtitle() }}</p>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <article *ngFor="let item of arrayContent('mentorship')" class="rounded-3xl border border-outline-variant/30 bg-white p-6 shadow-sm">
+                    <span class="material-symbols-outlined text-4xl text-secondary">{{ item.icon }}</span>
+                    <h4 class="mt-4 font-display text-xl font-bold text-primary">{{ text(item.title) }}</h4>
+                    <p class="mt-2 leading-7 text-on-surface-variant">{{ text(item.text) }}</p>
+                  </article>
+                </div>
+              </div>
+              <img class="aspect-square w-full rounded-3xl object-cover shadow-xl sm:rounded-4xl" [src]="section.media?.url" [alt]="section.media?.alt_text">
+            </div>
+
+            <div>
+              <div class="mb-8 text-center">
+                <h3 class="font-display text-2xl font-bold text-primary sm:text-3xl">{{ 'section.beyondClassroom' | translate }}</h3>
+                <p class="mx-auto mt-3 max-w-2xl leading-7 text-on-surface-variant">{{ 'section.lifeIntro' | translate }}</p>
+              </div>
+              <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
+                <article *ngFor="let activity of arrayContent('activities')" class="rounded-3xl p-6 shadow-sm transition hover:-translate-y-1" [class.bg-primary]="activity.featured" [class.text-white]="activity.featured" [class.bg-white]="!activity.featured" [class.md:col-span-2]="activity.featured">
+                  <span class="material-symbols-outlined text-4xl" [class.text-secondary-container]="activity.featured" [class.text-secondary]="!activity.featured">{{ activity.icon }}</span>
+                  <h4 class="mt-4 font-display text-xl font-bold" [class.text-primary]="!activity.featured">{{ text(activity.title) }}</h4>
+                  <p class="mt-3 leading-7" [class.text-on-surface-variant]="!activity.featured">{{ text(activity.text) }}</p>
+                </article>
+              </div>
+            </div>
+
+            <div class="rounded-3xl bg-white/70 p-6 shadow-sm ring-1 ring-white/60 backdrop-blur sm:rounded-4xl sm:p-8">
+              <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
+                <div>
+                  <h3 class="font-display text-2xl font-bold text-primary">{{ text(objectContent('community')['title'] || 'Association des Parents d Eleves') }}</h3>
+                  <p class="mt-4 leading-8 text-on-surface-variant">{{ text(objectContent('community')['text']) }}</p>
+                </div>
+                <ul class="grid gap-4">
+                  <li *ngFor="let point of objectContent('community')['points']" class="flex gap-3 rounded-2xl bg-surface-container-low p-4">
+                    <span class="material-symbols-outlined shrink-0 text-primary">check_circle</span>
+                    <span>{{ text(point) }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+              <blockquote *ngFor="let testimonial of arrayContent('testimonials')" class="rounded-3xl bg-white p-6 shadow-sm sm:p-8" [class.md:scale-105]="testimonial.featured" [class.bg-primary]="testimonial.featured" [class.text-white]="testimonial.featured">
+                <span class="material-symbols-outlined text-5xl opacity-20">format_quote</span>
+                <p class="mt-3 italic leading-7" [class.text-on-surface-variant]="!testimonial.featured">"{{ text(testimonial.quote) }}"</p>
+                <footer class="mt-6 font-bold" [class.text-primary]="!testimonial.featured">{{ text(testimonial.name) }}</footer>
+                <p class="text-sm opacity-70">{{ text(testimonial.role) }}</p>
+              </blockquote>
+            </div>
+          </div>
+
+          <div *ngSwitchCase="'events'" class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <article class="rounded-3xl bg-white p-5 shadow-sm sm:rounded-4xl sm:p-8">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined rounded-2xl bg-primary-container p-3 text-3xl text-on-primary">event_available</span>
+                <h3 class="font-display text-xl font-bold text-primary sm:text-2xl">{{ 'section.currentEvents' | translate }}</h3>
+              </div>
+              <div class="mt-6 grid gap-4">
+                <button *ngFor="let event of arrayContent('current')" class="block w-full rounded-2xl border border-outline-variant/40 bg-surface-container-low p-0 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg" type="button" (click)="openEventDetail(event)">
+                  <img *ngIf="eventImages(event)[0]" class="aspect-video w-full rounded-t-2xl object-cover" [src]="eventImages(event)[0].url" [alt]="text(eventImages(event)[0].altText || event.title)">
+                  <div class="p-4 sm:p-5">
+                  <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <h4 class="font-display text-lg font-bold text-primary">{{ text(event.title) }}</h4>
+                    <span class="inline-flex w-fit rounded-full bg-primary px-3 py-1 text-xs font-bold text-on-primary">{{ text(event.tag) }}</span>
+                  </div>
+                  <div class="mt-4 grid gap-2 text-sm font-semibold text-secondary sm:grid-cols-2">
+                    <span class="flex items-center gap-2"><span class="material-symbols-outlined text-lg">calendar_month</span>{{ text(event.date) }}</span>
+                    <span class="flex items-center gap-2"><span class="material-symbols-outlined text-lg">location_on</span>{{ text(event.location) }}</span>
+                  </div>
+                  <p class="mt-4 leading-7 text-on-surface-variant">{{ text(event.description) }}</p>
+                  </div>
+                </button>
+                <p *ngIf="!arrayContent('current').length" class="rounded-2xl bg-surface-container-low p-4 text-on-surface-variant">{{ 'section.noEvents' | translate }}</p>
+              </div>
+            </article>
+
+            <article class="rounded-3xl bg-secondary-container p-5 text-on-surface shadow-sm sm:rounded-4xl sm:p-8">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined rounded-2xl bg-white p-3 text-3xl text-secondary">event_upcoming</span>
+                <h3 class="font-display text-xl font-bold text-on-surface sm:text-2xl">{{ 'section.scheduledEvents' | translate }}</h3>
+              </div>
+              <div class="mt-6 grid gap-4">
+                <button *ngFor="let event of arrayContent('scheduled')" class="block w-full rounded-2xl bg-white p-0 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg" type="button" (click)="openEventDetail(event)">
+                  <img *ngIf="eventImages(event)[0]" class="aspect-video w-full rounded-t-2xl object-cover" [src]="eventImages(event)[0].url" [alt]="text(eventImages(event)[0].altText || event.title)">
+                  <div class="p-4 sm:p-5">
+                  <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <h4 class="font-display text-lg font-bold text-primary">{{ text(event.title) }}</h4>
+                    <span class="inline-flex w-fit rounded-full bg-secondary/10 px-3 py-1 text-xs font-bold text-secondary">{{ text(event.tag) }}</span>
+                  </div>
+                  <div class="mt-4 grid gap-2 text-sm font-semibold text-secondary sm:grid-cols-2">
+                    <span class="flex items-center gap-2"><span class="material-symbols-outlined text-lg">calendar_month</span>{{ text(event.date) }}</span>
+                    <span class="flex items-center gap-2"><span class="material-symbols-outlined text-lg">location_on</span>{{ text(event.location) }}</span>
+                  </div>
+                  <p class="mt-4 leading-7 text-on-surface-variant">{{ text(event.description) }}</p>
+                  </div>
+                </button>
+                <p *ngIf="!arrayContent('scheduled').length" class="rounded-2xl bg-white p-4 text-on-surface-variant">{{ 'section.noEvents' | translate }}</p>
+              </div>
+            </article>
+          </div>
+
+          <div *ngIf="selectedEvent" class="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/60 p-4" role="dialog" aria-modal="true" (click)="closeEventDetail()">
+            <article class="max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl" (click)="$event.stopPropagation()">
+              <div class="relative bg-surface-container-low">
+                <img *ngIf="eventImages(selectedEvent)[selectedEventImageIndex]" class="aspect-video w-full object-cover" [src]="eventImages(selectedEvent)[selectedEventImageIndex].url" [alt]="text(eventImages(selectedEvent)[selectedEventImageIndex].altText || selectedEvent.title)">
+                <div *ngIf="!eventImages(selectedEvent).length" class="flex aspect-video items-center justify-center bg-surface-container-high text-primary">
+                  <span class="material-symbols-outlined text-6xl">event</span>
+                </div>
+                <button class="absolute right-4 top-4 rounded-full bg-white/90 p-3 text-primary shadow-md" type="button" (click)="closeEventDetail()" [attr.aria-label]="'form.close' | translate">
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+                <button *ngIf="eventImages(selectedEvent).length > 1" class="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-3 text-primary shadow-md" type="button" (click)="previousEventImage()">
+                  <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <button *ngIf="eventImages(selectedEvent).length > 1" class="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-3 text-primary shadow-md" type="button" (click)="nextEventImage()">
+                  <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+              </div>
+              <div class="max-h-[45vh] overflow-y-auto p-5 sm:p-8">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 class="font-display text-2xl font-bold text-primary sm:text-3xl">{{ text(selectedEvent.title) }}</h3>
+                    <div class="mt-4 grid gap-2 text-sm font-semibold text-secondary sm:grid-cols-2">
+                      <span class="flex items-center gap-2"><span class="material-symbols-outlined text-lg">calendar_month</span>{{ text(selectedEvent.date) }}</span>
+                      <span class="flex items-center gap-2"><span class="material-symbols-outlined text-lg">location_on</span>{{ text(selectedEvent.location) }}</span>
+                    </div>
+                  </div>
+                  <span class="inline-flex w-fit rounded-full bg-primary px-3 py-1 text-xs font-bold text-on-primary">{{ text(selectedEvent.tag) }}</span>
+                </div>
+                <p class="mt-6 leading-8 text-on-surface-variant">{{ text(selectedEvent.description) }}</p>
+                <div *ngIf="eventImages(selectedEvent).length > 1" class="mt-6 flex gap-3 overflow-x-auto pb-2">
+                  <button *ngFor="let image of eventImages(selectedEvent); let imageIndex = index" class="h-20 w-28 shrink-0 overflow-hidden rounded-xl border-2" [class.border-primary]="imageIndex === selectedEventImageIndex" [class.border-transparent]="imageIndex !== selectedEventImageIndex" type="button" (click)="selectedEventImageIndex = imageIndex">
+                    <img class="h-full w-full object-cover" [src]="image.url" [alt]="text(image.altText || selectedEvent.title)">
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div *ngSwitchCase="'contact'" class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div class="rounded-3xl bg-white p-5 shadow-sm sm:rounded-4xl sm:p-8">
+              <h3 class="font-display text-xl font-bold text-primary sm:text-2xl">{{ 'section.sendMessage' | translate }}</h3>
+              <form class="mt-6 space-y-4" (ngSubmit)="sendMessage()">
+                <input class="w-full rounded-xl border border-outline-variant bg-surface p-3" name="full_name" [(ngModel)]="message.full_name" [placeholder]="'form.fullName' | translate" required>
+                <input class="w-full rounded-xl border border-outline-variant bg-surface p-3" name="email" [(ngModel)]="message.email" placeholder="Email" type="email" required>
+                <input class="w-full rounded-xl border border-outline-variant bg-surface p-3" name="subject" [(ngModel)]="message.subject" [placeholder]="'form.subject' | translate" required>
+                <textarea class="min-h-32 w-full rounded-xl border border-outline-variant bg-surface p-3" name="message" [(ngModel)]="message.message" [placeholder]="'form.message' | translate" required></textarea>
+                <button class="w-full rounded-xl bg-primary px-6 py-3 font-bold text-white sm:w-auto" type="submit">{{ 'form.send' | translate }}</button>
+                <span class="block pt-2 text-sm font-semibold text-primary sm:ml-3 sm:inline sm:pt-0" *ngIf="messageStatus">{{ messageStatus }}</span>
+              </form>
+            </div>
+            <div class="rounded-3xl bg-secondary-container p-5 text-on-surface shadow-sm sm:rounded-4xl sm:p-8">
+              <h3 class="font-display text-xl font-bold text-on-surface sm:text-2xl">{{ 'section.contactDetails' | translate }}</h3>
+              <p class="mt-4">{{ content('address') }}</p>
+              <p class="mt-2">{{ content('hours') }}</p>
+              <div class="mt-6 space-y-3">
+                <a *ngFor="let phone of arrayContent('phones')" class="block wrap-break-word rounded-xl bg-white p-4 font-bold text-secondary" [href]="'tel:' + phone">{{ phone }}</a>
+                <a class="block wrap-break-word rounded-xl bg-white p-4 font-bold text-secondary" [href]="'mailto:' + content('email')">{{ content('email') }}</a>
+              </div>
+            </div>
+          </div>
+
+          <div *ngSwitchDefault class="rounded-3xl bg-white p-5 shadow-sm sm:rounded-4xl sm:p-8">
+            <img *ngIf="section.media" class="mb-6 max-h-96 w-full rounded-3xl object-cover" [src]="section.media.url" [alt]="section.media.alt_text">
+            <pre class="overflow-auto rounded-xl bg-surface-container-low p-4 text-sm">{{ section.content | json }}</pre>
+          </div>
+        </ng-container>
+      </div>
+    </section>

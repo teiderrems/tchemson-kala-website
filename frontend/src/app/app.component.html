@@ -1,0 +1,41 @@
+<div class="app-background-layer" aria-hidden="true"></div>
+<header class="sticky top-0 z-50 border-b border-outline-variant/40 bg-surface/95 backdrop-blur">
+  <nav class="container-page flex h-20 items-center justify-between">
+    <a routerLink="/" class="flex min-w-0 items-center gap-3" [attr.aria-label]="'nav.home' | translate">
+      <img class="h-11 w-auto shrink-0 sm:h-12" src="/assets/logo.jpeg" [alt]="'nav.logoAlt' | translate">
+    </a>
+    <div class="hidden items-center gap-7 text-sm font-semibold text-on-surface-variant lg:flex">
+      <a routerLink="/" fragment="vision" class="hover:text-primary">{{ 'nav.vision' | translate }}</a>
+      <a routerLink="/" fragment="admissions" class="hover:text-primary">{{ 'nav.admissions' | translate }}</a>
+      <a routerLink="/" fragment="services" class="hover:text-primary">{{ 'nav.services' | translate }}</a>
+      <a routerLink="/" fragment="events" class="hover:text-primary">{{ 'nav.events' | translate }}</a>
+      <a routerLink="/" fragment="contact" class="hover:text-primary">{{ 'nav.contact' | translate }}</a>
+      <a routerLink="/admin" routerLinkActive="text-primary" class="hover:text-primary">{{ 'nav.admin' | translate }}</a>
+    </div>
+    <div class="flex items-center gap-2">
+      <button class="rounded-full border border-primary px-3 py-2 text-sm font-bold text-primary" type="button" (click)="i18n.toggleLanguage()">
+        {{ 'nav.language' | translate }}
+      </button>
+      <a routerLink="/" fragment="admissions" class="rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-on-primary shadow-md sm:px-5">
+        {{ 'nav.enroll' | translate }}
+      </a>
+    </div>
+  </nav>
+</header>
+<main class="relative z-10 overflow-hidden" [@routeAnimations]="getRouteAnimationData(outlet)">
+  <router-outlet #outlet="outlet" />
+</main>
+<button
+  class="fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-on-primary shadow-xl ring-2 ring-white/80 transition duration-200 hover:bg-primary-container sm:bottom-8 sm:right-8 sm:h-14 sm:w-14"
+  [class.translate-y-4]="!showQuickNav"
+  [class.opacity-0]="!showQuickNav"
+  [class.pointer-events-none]="!showQuickNav"
+  [class.translate-y-0]="showQuickNav"
+  [class.opacity-100]="showQuickNav"
+  type="button"
+  (click)="scrollToFirstSection()"
+  [attr.aria-label]="'nav.quickFirstSection' | translate"
+  [attr.title]="'nav.quickFirstSection' | translate"
+>
+  <span class="material-symbols-outlined text-3xl">keyboard_double_arrow_up</span>
+</button>

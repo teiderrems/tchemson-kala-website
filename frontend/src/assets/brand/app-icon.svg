@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Tchemson-Kala App Icon</title>
+  <desc id="desc">Icone de l'application Tchemson-Kala</desc>
+  <rect width="512" height="512" rx="112" fill="#006b2e"/>
+  <circle cx="390" cy="100" r="104" fill="#2fbcff" opacity=".52"/>
+  <circle cx="104" cy="410" r="126" fill="#fee339" opacity=".72"/>
+  <rect x="88" y="134" width="336" height="260" rx="48" fill="#ffffff" opacity=".94"/>
+  <path d="M148 218 256 160l108 58-108 58-108-58Z" fill="#006b2e"/>
+  <path d="M184 252v66c0 18 32 49 72 49s72-31 72-49v-66l-72 39-72-39Z" fill="#00873b"/>
+  <path d="M366 230v88" stroke="#00658e" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="366" cy="338" r="18" fill="#c2ac00"/>
+</svg>

@@ -1,0 +1,22 @@
+[project]
+name = "tchemson-kala-api"
+version = "0.1.0"
+description = "API FastAPI pour le site vitrine du Centre Educatif Bilingue Tchemson-Kala"
+readme = "README.md"
+requires-python = ">=3.11,<4.0"
+authors = [{ name = "Tchemson-Kala" }]
+dependencies = [
+    "fastapi[standard]>=0.138.1",
+    "sqlalchemy[asyncio]>=2.0.30",
+    "asyncpg>=0.29.0",
+    "pydantic-settings>=2.3.0",
+    "python-multipart>=0.0.9",
+    "email-validator>=2.1.1",
+]
+
+[tool.poetry]
+packages = [{ include = "app" }]
+
+[build-system]
+requires = ["poetry-core>=1.9.0"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,36 @@
+<div *ngIf="open" class="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+  <button class="absolute inset-0 bg-[#1a1c1e]/55 backdrop-blur-sm" type="button" aria-label="Fermer" (click)="cancelled.emit()"></button>
+
+  <section class="relative w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl" appScrollReveal>
+    <div class="flex items-start gap-4">
+      <div
+        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
+        [class.bg-secondary-fixed]="destructive"
+        [class.text-secondary]="destructive"
+        [class.bg-primary-fixed]="!destructive"
+        [class.text-primary]="!destructive"
+      >
+        <span class="material-symbols-outlined">{{ destructive ? 'warning' : 'help' }}</span>
+      </div>
+      <div class="min-w-0">
+        <h2 class="font-display text-xl font-bold text-primary">{{ title }}</h2>
+        <p class="mt-2 leading-7 text-on-surface-variant">{{ message }}</p>
+      </div>
+    </div>
+
+    <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <button class="rounded-xl border border-outline-variant px-5 py-3 font-bold text-on-surface" type="button" (click)="cancelled.emit()">
+        {{ cancelText }}
+      </button>
+      <button
+        class="rounded-xl px-5 py-3 font-bold text-white"
+        type="button"
+        [class.bg-secondary]="destructive"
+        [class.bg-primary]="!destructive"
+        (click)="confirmed.emit()"
+      >
+        {{ confirmText }}
+      </button>
+    </div>
+  </section>
+</div>

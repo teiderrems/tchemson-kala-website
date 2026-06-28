@@ -1,0 +1,19 @@
+{
+  "name": "Centre Educatif Bilingue Tchemson-Kala",
+  "short_name": "Tchemson-Kala",
+  "description": "Site vitrine du Centre Educatif Bilingue Tchemson-Kala.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f9f9fc",
+  "theme_color": "#006b2e",
+  "icons": [
+    {
+      "src": "/assets/icon.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
