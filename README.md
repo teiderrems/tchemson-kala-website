@@ -93,6 +93,8 @@ Variables a definir dans Render:
 - `ADMIN_TOKEN_EXPIRE_MINUTES`
 - `CORS_ORIGINS`
 
+`DATABASE_URL` peut utiliser l'URL PostgreSQL fournie par Render (`postgres://...` ou `postgresql://...`). L'application la convertit automatiquement vers le driver async SQLAlchemy.
+
 `CORS_ORIGINS` doit contenir l'URL publique Render de l'application, par exemple:
 
 ```text
