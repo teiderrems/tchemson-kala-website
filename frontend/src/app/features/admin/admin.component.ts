@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
@@ -19,7 +19,7 @@ type EditableSection = PageSection & { contentText: string; status?: string; err
   imports: [CommonModule, FormsModule, ConfirmDialogComponent, ScrollRevealDirective, TranslatePipe],
   templateUrl: './admin.component.html',
 })
-export class AdminComponent implements OnInit {
+export class AdminComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
   private readonly i18n = inject(I18nService);
 
@@ -35,6 +35,10 @@ export class AdminComponent implements OnInit {
   selectedMediaId: number | null = null;
   globalStatus = '';
   globalError = '';
+  notification = {
+    message: '',
+    type: 'success' as 'success' | 'error',
+  };
   isLoggingIn = false;
   isLoading = false;
   isSaving = false;
@@ -47,14 +51,20 @@ export class AdminComponent implements OnInit {
     message: '',
     confirmText: 'Confirmer',
     action: null as 'delete-section' | 'delete-media' | null,
+    media: null as MediaAsset | null,
   };
   private readonly memberPhotoFiles = new WeakMap<object, File>();
   private readonly eventImageFiles = new WeakMap<object, File[]>();
+  private notificationTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
     if (this.isAuthenticated()) {
       this.load();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.clearNotificationTimer();
   }
 
   isAuthenticated(): boolean {
@@ -74,13 +84,16 @@ export class AdminComponent implements OnInit {
         localStorage.setItem('adminTokenExpiresAt', String(this.tokenExpiresAt));
         this.password = '';
         this.isLoggingIn = false;
+        this.setGlobalStatus(this.i18n.language() === 'fr' ? 'Connexion reussie.' : 'Signed in successfully.');
         this.load();
       },
       error: (error) => {
         this.isLoggingIn = false;
-        this.globalError = this.errorMessage(
-          error,
-          this.i18n.language() === 'fr' ? 'Connexion impossible. Verifiez vos identifiants.' : 'Unable to sign in. Check your credentials.',
+        this.setGlobalError(
+          this.errorMessage(
+            error,
+            this.i18n.language() === 'fr' ? 'Connexion impossible. Verifiez vos identifiants.' : 'Unable to sign in. Check your credentials.',
+          ),
         );
       },
     });
@@ -97,14 +110,13 @@ export class AdminComponent implements OnInit {
     this.altText = '';
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminTokenExpiresAt');
-    this.globalStatus = this.i18n.language() === 'fr' ? 'Session admin fermee.' : 'Admin session closed.';
-    this.globalError = '';
+    this.setGlobalStatus(this.i18n.language() === 'fr' ? 'Session admin fermee.' : 'Admin session closed.');
   }
 
   load(): void {
     if (!this.isAuthenticated()) {
       this.logout();
-      this.globalError = this.i18n.language() === 'fr' ? 'Connectez-vous pour administrer le site.' : 'Sign in to administer the website.';
+      this.setGlobalError(this.i18n.language() === 'fr' ? 'Connectez-vous pour administrer le site.' : 'Sign in to administer the website.');
       return;
     }
 
@@ -120,16 +132,19 @@ export class AdminComponent implements OnInit {
         this.selected = this.sections[0] ?? null;
         this.selectedMediaId = this.selected?.media?.id ?? null;
         this.altText = this.selected?.media?.alt_text ?? '';
-        this.globalStatus =
-          this.i18n.language() === 'fr' ? `${sections.length} section(s) chargee(s).` : `${sections.length} section(s) loaded.`;
+        this.setGlobalStatus(
+          this.i18n.language() === 'fr' ? `${sections.length} section(s) chargee(s).` : `${sections.length} section(s) loaded.`,
+        );
         this.isLoading = false;
       },
       error: (error) => {
         this.sections = [];
         this.selected = null;
-        this.globalError = this.errorMessage(
-          error,
-          this.i18n.language() === 'fr' ? 'Chargement impossible. Reconnectez-vous ou verifiez l API.' : 'Unable to load. Sign in again or check the API.',
+        this.setGlobalError(
+          this.errorMessage(
+            error,
+            this.i18n.language() === 'fr' ? 'Chargement impossible. Reconnectez-vous ou verifiez l API.' : 'Unable to load. Sign in again or check the API.',
+          ),
         );
         if (error instanceof HttpErrorResponse && error.status === 401) {
           this.logout();
@@ -187,6 +202,7 @@ export class AdminComponent implements OnInit {
 
     this.sections = [section, ...this.sections];
     this.select(section);
+    this.setSelectedStatus(section.status || '');
   }
 
   save(): void {
@@ -223,16 +239,18 @@ export class AdminComponent implements OnInit {
         Object.assign(this.selected!, updated, {
           contentText: JSON.stringify(updated.content, null, 2),
           error: '',
-          status: this.i18n.language() === 'fr' ? 'Section enregistree.' : 'Section saved.',
         });
+        this.setSelectedStatus(this.i18n.language() === 'fr' ? 'Section enregistree.' : 'Section saved.');
         this.sections = this.sections.map((section) => (section === this.selected || section.id === updated.id ? this.selected! : section));
         this.isSaving = false;
       },
       error: (error) => {
         if (this.selected) {
-          this.selected.error = this.errorMessage(
-            error,
-            this.i18n.language() === 'fr' ? 'Enregistrement impossible. Reconnectez-vous ou verifiez l API.' : 'Unable to save. Sign in again or check the API.',
+          this.setSelectedError(
+            this.errorMessage(
+              error,
+              this.i18n.language() === 'fr' ? 'Enregistrement impossible. Reconnectez-vous ou verifiez l API.' : 'Unable to save. Sign in again or check the API.',
+            ),
           );
         }
         this.isSaving = false;
@@ -254,6 +272,7 @@ export class AdminComponent implements OnInit {
           : `The section "${this.selected.key}" will be permanently deleted. Associated images will not be deleted.`,
       confirmText: this.i18n.language() === 'fr' ? 'Supprimer' : 'Delete',
       action: 'delete-section',
+      media: null,
     };
   }
 
@@ -271,6 +290,7 @@ export class AdminComponent implements OnInit {
   closeConfirmDialog(): void {
     this.confirmDialog.open = false;
     this.confirmDialog.action = null;
+    this.confirmDialog.media = null;
   }
 
   private deleteSectionNow(): void {
@@ -292,7 +312,7 @@ export class AdminComponent implements OnInit {
       next: () => {
         this.sections = this.sections.filter((item) => item.id !== section.id);
         this.selected = this.sections[0] ?? null;
-        this.globalStatus = this.i18n.language() === 'fr' ? 'Section supprimee.' : 'Section deleted.';
+        this.setGlobalStatus(this.i18n.language() === 'fr' ? 'Section supprimee.' : 'Section deleted.');
         this.closeConfirmDialog();
       },
       error: (error) => {
@@ -306,9 +326,7 @@ export class AdminComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     this.pendingFile = input.files?.[0] ?? null;
     if (this.selected && this.pendingFile) {
-      this.selected.error = '';
-      this.selected.status =
-        this.i18n.language() === 'fr' ? `Fichier selectionne: ${this.pendingFile.name}` : `Selected file: ${this.pendingFile.name}`;
+      this.setSelectedStatus(this.i18n.language() === 'fr' ? `Fichier selectionne: ${this.pendingFile.name}` : `Selected file: ${this.pendingFile.name}`);
     }
   }
 
@@ -330,11 +348,11 @@ export class AdminComponent implements OnInit {
         this.selected.media = media;
         this.selectedMediaId = media.id;
         this.mediaAssets = [media, ...this.mediaAssets.filter((item) => item.id !== media.id)];
-        this.selected.status =
+        this.setSelectedStatus(
           this.i18n.language() === 'fr'
             ? 'Image uploadee. Cliquez sur Enregistrer pour confirmer l association.'
-            : 'Image uploaded. Click Save to confirm the association.';
-        this.selected.error = '';
+            : 'Image uploaded. Click Save to confirm the association.',
+        );
         this.pendingFile = null;
         const fileInput = document.querySelector<HTMLInputElement>('#section-image-upload');
         if (fileInput) {
@@ -344,7 +362,7 @@ export class AdminComponent implements OnInit {
       },
       error: (error) => {
         if (this.selected) {
-          this.selected.error = this.errorMessage(error, this.i18n.language() === 'fr' ? 'Upload impossible. Reconnectez-vous ou verifiez le fichier.' : 'Upload failed. Sign in again or check the file.');
+          this.setSelectedError(this.errorMessage(error, this.i18n.language() === 'fr' ? 'Upload impossible. Reconnectez-vous ou verifiez le fichier.' : 'Upload failed. Sign in again or check the file.'));
         }
         this.isUploading = false;
       },
@@ -367,8 +385,7 @@ export class AdminComponent implements OnInit {
 
     this.selected.media = media;
     this.altText = media.alt_text;
-    this.selected.error = '';
-    this.selected.status = this.i18n.language() === 'fr' ? 'Image associee. Cliquez sur Enregistrer pour confirmer.' : 'Image attached. Click Save to confirm.';
+    this.setSelectedStatus(this.i18n.language() === 'fr' ? 'Image associee. Cliquez sur Enregistrer pour confirmer.' : 'Image attached. Click Save to confirm.');
   }
 
   setBackgroundFromSelectedMedia(): void {
@@ -444,7 +461,7 @@ export class AdminComponent implements OnInit {
     this.selected.media = null;
     this.selectedMediaId = null;
     this.altText = '';
-    this.selected.status = 'Image detachee. Cliquez sur Enregistrer pour confirmer.';
+    this.setSelectedStatus('Image detachee. Cliquez sur Enregistrer pour confirmer.');
   }
 
   saveMediaMetadata(): void {
@@ -460,12 +477,11 @@ export class AdminComponent implements OnInit {
         }
         this.selected.media = updated;
         this.mediaAssets = this.mediaAssets.map((item) => (item.id === updated.id ? updated : item));
-        this.selected.error = '';
-        this.selected.status = 'Texte alternatif de l image enregistre.';
+        this.setSelectedStatus('Texte alternatif de l image enregistre.');
       },
       error: (error) => {
         if (this.selected) {
-          this.selected.error = this.errorMessage(error, 'Mise a jour du media impossible.');
+          this.setSelectedError(this.errorMessage(error, 'Mise a jour du media impossible.'));
         }
       },
     });
@@ -479,38 +495,53 @@ export class AdminComponent implements OnInit {
       return;
     }
 
+    this.confirmDeleteMedia(this.selected.media);
+  }
+
+  confirmDeleteMedia(media: MediaAsset): void {
     this.confirmDialog = {
       open: true,
-      title: 'Supprimer l image',
-      message: `L image "${this.selected.media.filename}" sera supprimee definitivement de la base si elle n est utilisee par aucune autre section.`,
-      confirmText: 'Supprimer',
+      title: this.i18n.language() === 'fr' ? 'Supprimer l image' : 'Delete image',
+      message:
+        this.i18n.language() === 'fr'
+          ? `L image "${media.filename}" sera supprimee definitivement si elle n est utilisee dans aucune section.`
+          : `The image "${media.filename}" will be permanently deleted if it is not used in any section.`,
+      confirmText: this.i18n.language() === 'fr' ? 'Supprimer' : 'Delete',
       action: 'delete-media',
+      media,
     };
   }
 
   private deleteMediaNow(): void {
-    if (!this.selected?.media) {
+    const media = this.confirmDialog.media ?? this.selected?.media;
+    if (!media) {
       this.closeConfirmDialog();
       return;
     }
 
-    const media = this.selected.media;
     this.api.deleteMedia(this.authToken, media.id).subscribe({
       next: () => {
-        if (!this.selected) {
-          return;
-        }
         this.mediaAssets = this.mediaAssets.filter((item) => item.id !== media.id);
-        this.selected.media = null;
-        this.selectedMediaId = null;
-        this.altText = '';
-        this.selected.status = 'Image supprimee de la base.';
+        if (this.selected?.media?.id === media.id) {
+          this.selected.media = null;
+          this.selectedMediaId = null;
+          this.altText = '';
+        }
+        this.sections = this.sections.map((section) =>
+          section.media?.id === media.id ? { ...section, media: null, contentText: JSON.stringify(section.content, null, 2) } : section,
+        );
+        this.setSelectedStatus(this.i18n.language() === 'fr' ? 'Image supprimee de la base.' : 'Image deleted from the database.');
         this.closeConfirmDialog();
       },
       error: (error) => {
-        if (this.selected) {
-          this.selected.error = this.errorMessage(error, 'Suppression impossible. Detachez l image des sections qui l utilisent.');
-        }
+        this.setSelectedError(
+          this.errorMessage(
+            error,
+            this.i18n.language() === 'fr'
+              ? 'Suppression impossible. Detachez l image des sections qui l utilisent.'
+              : 'Unable to delete. Detach the image from sections using it.',
+          ),
+        );
         this.closeConfirmDialog();
       },
     });
@@ -536,8 +567,7 @@ export class AdminComponent implements OnInit {
 
     this.selected.content = this.templateForKind(this.selected.kind);
     this.selected.contentText = JSON.stringify(this.selected.content, null, 2);
-    this.selected.status = `Modele ${this.selected.kind} applique.`;
-    this.selected.error = '';
+    this.setSelectedStatus(`Modele ${this.selected.kind} applique.`);
   }
 
   contentField(key: string): string {
@@ -695,11 +725,11 @@ export class AdminComponent implements OnInit {
 
     this.eventImageFiles.set(eventItem, files);
     if (this.selected) {
-      this.selected.status =
+      this.setSelectedStatus(
         this.i18n.language() === 'fr'
           ? `${files.length} image(s) selectionnee(s) pour cet evenement.`
-          : `${files.length} image(s) selected for this event.`;
-      this.selected.error = '';
+          : `${files.length} image(s) selected for this event.`,
+      );
     }
   }
 
@@ -738,9 +768,11 @@ export class AdminComponent implements OnInit {
       },
       error: (error) => {
         if (this.selected) {
-          this.selected.error = this.errorMessage(
-            error,
-            this.i18n.language() === 'fr' ? 'Upload des images de l evenement impossible.' : 'Unable to upload event images.',
+          this.setSelectedError(
+            this.errorMessage(
+              error,
+              this.i18n.language() === 'fr' ? 'Upload des images de l evenement impossible.' : 'Unable to upload event images.',
+            ),
           );
         }
         this.uploadingEvent = null;
@@ -773,8 +805,7 @@ export class AdminComponent implements OnInit {
     }
 
     this.memberPhotoFiles.set(member, file);
-    this.selected!.status = `Photo selectionnee pour ${member.name || 'ce membre'}: ${file.name}`;
-    this.selected!.error = '';
+    this.setSelectedStatus(`Photo selectionnee pour ${member.name || 'ce membre'}: ${file.name}`);
   }
 
   teamMemberPhotoFileName(member: any): string {
@@ -806,7 +837,7 @@ export class AdminComponent implements OnInit {
       },
       error: (error) => {
         if (this.selected) {
-          this.selected.error = this.errorMessage(error, 'Upload de la photo du membre impossible.');
+          this.setSelectedError(this.errorMessage(error, 'Upload de la photo du membre impossible.'));
         }
         this.uploadingTeamMember = null;
       },
@@ -821,7 +852,7 @@ export class AdminComponent implements OnInit {
     this.selected.contentText = JSON.stringify(this.selected.content, null, 2);
     this.selected.error = '';
     if (status) {
-      this.selected.status = status;
+      this.setSelectedStatus(status);
     }
   }
 
@@ -915,5 +946,65 @@ export class AdminComponent implements OnInit {
       return detail ? `${fallback} (${detail})` : fallback;
     }
     return fallback;
+  }
+
+  private setGlobalStatus(message: string, duration = 3500): void {
+    this.globalStatus = message;
+    this.globalError = '';
+    this.showNotification(message, 'success', duration, () => {
+      if (this.globalStatus === message) {
+        this.globalStatus = '';
+      }
+    });
+  }
+
+  private setGlobalError(message: string, duration = 6000): void {
+    this.globalError = message;
+    this.globalStatus = '';
+    this.showNotification(message, 'error', duration, () => {
+      if (this.globalError === message) {
+        this.globalError = '';
+      }
+    });
+  }
+
+  private setSelectedStatus(message: string, duration = 3500): void {
+    if (this.selected) {
+      this.selected.status = message;
+      this.selected.error = '';
+    }
+    this.showNotification(message, 'success', duration, () => {
+      if (this.selected?.status === message) {
+        this.selected.status = '';
+      }
+    });
+  }
+
+  private setSelectedError(message: string, duration = 6000): void {
+    if (this.selected) {
+      this.selected.error = message;
+    }
+    this.showNotification(message, 'error', duration, () => {
+      if (this.selected?.error === message) {
+        this.selected.error = '';
+      }
+    });
+  }
+
+  private showNotification(message: string, type: 'success' | 'error', duration: number, afterHide?: () => void): void {
+    this.clearNotificationTimer();
+    this.notification = { message, type };
+    this.notificationTimer = setTimeout(() => {
+      this.notification = { message: '', type };
+      this.notificationTimer = null;
+      afterHide?.();
+    }, duration);
+  }
+
+  private clearNotificationTimer(): void {
+    if (this.notificationTimer) {
+      clearTimeout(this.notificationTimer);
+      this.notificationTimer = null;
+    }
   }
 }

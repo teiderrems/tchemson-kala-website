@@ -1,4 +1,24 @@
     <main class="min-h-screen overflow-x-hidden bg-surface/70">
+      <div
+        class="fixed right-4 top-24 z-[120] w-[calc(100%-2rem)] max-w-md rounded-2xl p-4 text-sm font-bold shadow-2xl transition duration-300 sm:right-6"
+        [class.bg-primary]="notification.type === 'success'"
+        [class.text-white]="notification.type === 'success'"
+        [class.bg-error-container]="notification.type === 'error'"
+        [class.text-error]="notification.type === 'error'"
+        [class.opacity-0]="!notification.message"
+        [class.translate-y-2]="!notification.message"
+        [class.pointer-events-none]="!notification.message"
+        [class.opacity-100]="notification.message"
+        [class.translate-y-0]="notification.message"
+        role="status"
+        aria-live="polite"
+      >
+        <div class="flex items-start gap-3">
+          <span class="material-symbols-outlined shrink-0">{{ notification.type === 'success' ? 'check_circle' : 'error' }}</span>
+          <span class="min-w-0 wrap-break-word">{{ notification.message }}</span>
+        </div>
+      </div>
+
       <section class="border-b border-outline-variant/40 bg-surface-container-low/75 py-8 sm:py-10" appScrollReveal>
         <div class="container-page flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
           <div>
@@ -503,6 +523,59 @@
                 <input class="mt-3 w-full rounded-xl border border-outline-variant bg-white p-3" [(ngModel)]="altText" name="altText" [placeholder]="'admin.altText' | translate">
                 <button class="mt-3 w-full rounded-xl bg-secondary px-4 py-3 font-bold text-white" type="button" (click)="uploadSelectedImage()">{{ 'admin.uploadAndAttach' | translate }}</button>
                 <button class="mt-3 w-full rounded-xl border border-primary px-4 py-3 font-bold text-primary" type="button" (click)="saveMediaMetadata()" [disabled]="!selected.media">{{ 'admin.saveAltText' | translate }}</button>
+                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                  <button class="rounded-xl border border-secondary px-4 py-3 font-bold text-secondary disabled:opacity-60" type="button" (click)="detachMedia()" [disabled]="!selected.media">{{ 'admin.detachImage' | translate }}</button>
+                  <button class="rounded-xl border border-error px-4 py-3 font-bold text-error disabled:opacity-60" type="button" (click)="deleteSelectedMedia()" [disabled]="!selected.media">{{ 'admin.deleteImage' | translate }}</button>
+                </div>
+
+                <div class="my-5 h-px bg-outline-variant/50"></div>
+
+                <h4 class="font-display text-lg font-bold text-primary">{{ 'admin.mediaLibrary' | translate }}</h4>
+                <div class="admin-scroll mt-3 grid max-h-96 gap-3 overflow-y-auto pr-2" *ngIf="mediaAssets.length; else emptyMediaLibrary">
+                  <article
+                    *ngFor="let media of mediaAssets"
+                    class="grid min-w-0 grid-cols-[64px_minmax(0,1fr)] gap-3 rounded-2xl border border-outline-variant/30 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:grid-cols-[76px_minmax(0,1fr)]"
+                    [class.ring-2]="selected.media?.id === media.id"
+                    [class.ring-primary]="selected.media?.id === media.id"
+                  >
+                    <div class="overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-low">
+                      <img class="h-16 w-16 object-cover sm:h-18 sm:w-19" [src]="media.url" [alt]="media.alt_text || media.filename">
+                    </div>
+                    <div class="min-w-0">
+                      <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0">
+                          <p class="truncate text-sm font-bold text-on-surface" [title]="media.filename">{{ media.filename }}</p>
+                          <p class="mt-1 truncate text-xs text-on-surface-variant">#{{ media.id }} · {{ media.content_type }}</p>
+                        </div>
+                        <span class="material-symbols-outlined shrink-0 text-lg text-primary" *ngIf="selected.media?.id === media.id" [attr.title]="'admin.attachedImage' | translate">check_circle</span>
+                      </div>
+                      <div class="mt-3 flex min-w-0 flex-wrap items-center gap-2">
+                        <button
+                          class="inline-flex h-10 min-w-0 flex-1 basis-24 items-center justify-center gap-1.5 rounded-xl border border-primary px-2 text-xs font-bold text-primary transition hover:bg-primary hover:text-white disabled:opacity-60"
+                          type="button"
+                          (click)="selectedMediaId = media.id; attachExistingMedia()"
+                          [disabled]="selected.media?.id === media.id"
+                          [attr.title]="'admin.attachSelected' | translate"
+                        >
+                          <span class="material-symbols-outlined text-lg">add_photo_alternate</span>
+                          <span class="truncate">{{ selected.media?.id === media.id ? ('admin.attachedImage' | translate) : ('admin.attachShort' | translate) }}</span>
+                        </button>
+                        <button
+                          class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-error text-error transition hover:bg-error hover:text-white"
+                          type="button"
+                          (click)="confirmDeleteMedia(media)"
+                          [attr.aria-label]="'admin.deleteImage' | translate"
+                          [attr.title]="'admin.deleteImage' | translate"
+                        >
+                          <span class="material-symbols-outlined text-lg">delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+                <ng-template #emptyMediaLibrary>
+                  <p class="mt-3 rounded-2xl bg-white p-4 text-sm text-on-surface-variant">{{ 'admin.noMedia' | translate }}</p>
+                </ng-template>
 
                 <div class="my-5 h-px bg-outline-variant/50"></div>
 

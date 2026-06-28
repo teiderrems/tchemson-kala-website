@@ -12,6 +12,22 @@ from app.schemas import MediaAssetRead, MediaAssetUpdate
 router = APIRouter(tags=["media"])
 
 
+def content_references_media(value: object, media_id: int) -> bool:
+    media_url = f"/api/media/{media_id}/bytes"
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if key in {"mediaId", "photoMediaId"} and item == media_id:
+                return True
+            if content_references_media(item, media_id):
+                return True
+        return False
+
+    if isinstance(value, list):
+        return any(content_references_media(item, media_id) for item in value)
+
+    return value == media_url
+
+
 @router.get("/admin/media", response_model=list[MediaAssetRead], dependencies=[Depends(require_admin)])
 async def list_media(session: AsyncSession = Depends(get_session)) -> list[MediaAssetRead]:
     result = await session.execute(select(MediaAsset).order_by(MediaAsset.created_at.desc(), MediaAsset.id.desc()))
@@ -64,6 +80,14 @@ async def delete_media(media_id: int, session: AsyncSession = Depends(get_sessio
     used_by_section = await session.scalar(select(PageSection.id).where(PageSection.media_id == media_id).limit(1))
     if used_by_section:
         raise HTTPException(status_code=409, detail="Media is still used by a section")
+
+    sections_result = await session.execute(select(PageSection))
+    used_in_content = next(
+        (section.key for section in sections_result.scalars() if content_references_media(section.content, media_id)),
+        "",
+    )
+    if used_in_content:
+        raise HTTPException(status_code=409, detail=f"Media is still referenced in section content: {used_in_content}")
 
     await session.delete(media)
     await session.commit()
