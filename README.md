@@ -80,6 +80,27 @@ poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 Le build Angular est servi depuis `dist`.
 
+## Deploiement Render avec Docker
+
+Render ne lance pas `docker-compose` pour un Web Service Docker. Le dernier stage du `Dockerfile` est donc autonome: il demarre FastAPI sur `127.0.0.1:8000` et Nginx sur le port fourni par Render via `PORT`.
+
+Variables a definir dans Render:
+
+- `DATABASE_URL`
+- `ADMIN_USERNAME`
+- `ADMIN_PASSWORD`
+- `ADMIN_TOKEN_SECRET`
+- `ADMIN_TOKEN_EXPIRE_MINUTES`
+- `CORS_ORIGINS`
+
+`CORS_ORIGINS` doit contenir l'URL publique Render de l'application, par exemple:
+
+```text
+https://votre-service.onrender.com
+```
+
+Il ne faut pas utiliser `api:8000` dans Render: ce nom existe uniquement dans `docker-compose`.
+
 ## Donnees
 
 Au premier demarrage, FastAPI cree les tables et insere les sections par defaut. Les images par defaut sont stockees dans PostgreSQL dans la table `media_assets` en `bytea`.

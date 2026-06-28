@@ -56,3 +56,33 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY --from=frontend-builder /src/dist /usr/share/nginx/html
 
 EXPOSE 8080
+
+
+FROM python:3.13-alpine AS web
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/app/.venv/bin:$PATH"
+
+WORKDIR /app
+
+RUN apk add --no-cache libstdc++ nginx \
+    && addgroup -S appuser \
+    && adduser -S -G appuser -h /app -s /sbin/nologin appuser \
+    && mkdir -p /usr/share/nginx/html /run/nginx \
+    && chown -R appuser:appuser /app /usr/share/nginx/html /run/nginx /var/lib/nginx /var/log/nginx
+
+COPY --from=python-builder /app/.venv ./.venv
+COPY app ./app
+COPY --from=frontend-builder /src/dist ./dist
+COPY --from=frontend-builder /src/dist /usr/share/nginx/html
+COPY docker/nginx.render.conf.template /etc/nginx/nginx.conf.template
+COPY docker/start-render.sh /usr/local/bin/start-render.sh
+
+RUN chmod +x /usr/local/bin/start-render.sh
+
+USER appuser
+
+EXPOSE 8080
+
+CMD ["/usr/local/bin/start-render.sh"]
