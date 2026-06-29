@@ -35,6 +35,18 @@ export class ApiService {
     });
   }
 
+  getAdminMessages(token: string): Observable<ContactMessage[]> {
+    return this.http.get<ContactMessage[]>(`${this.baseUrl}/admin/messages`, {
+      headers: this.adminHeaders(token),
+    });
+  }
+
+  deleteMessage(token: string, messageId: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/admin/messages/${messageId}`, {
+      headers: this.adminHeaders(token),
+    });
+  }
+
   createSection(token: string, section: PageSection): Observable<PageSection> {
     const payload = {
       key: section.key,

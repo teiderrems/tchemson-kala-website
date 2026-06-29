@@ -6,7 +6,7 @@ import { forkJoin } from 'rxjs';
 
 import { ApiService } from '../../core/api.service';
 import { I18nService } from '../../core/i18n.service';
-import { MediaAsset, PageSection } from '../../core/models';
+import { ContactMessage, MediaAsset, PageSection } from '../../core/models';
 import { TranslatePipe } from '../../core/translate.pipe';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { ScrollRevealDirective } from '../../shared/directives/scroll-reveal.directive';
@@ -30,6 +30,8 @@ export class AdminComponent implements OnInit, OnDestroy {
   tokenExpiresAt = Number(localStorage.getItem('adminTokenExpiresAt') ?? '0');
   sections: EditableSection[] = [];
   mediaAssets: MediaAsset[] = [];
+  contactMessages: ContactMessage[] = [];
+  selectedMessage: ContactMessage | null = null;
   selected: EditableSection | null = null;
   pendingFile: File | null = null;
   altText = '';
@@ -44,6 +46,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   isLoading = false;
   isSaving = false;
   isUploading = false;
+  isLoadingMessages = false;
   uploadingTeamMember: any | null = null;
   uploadingEvent: any | null = null;
   confirmDialog = {
@@ -51,8 +54,9 @@ export class AdminComponent implements OnInit, OnDestroy {
     title: '',
     message: '',
     confirmText: 'Confirmer',
-    action: null as 'delete-section' | 'delete-media' | null,
+    action: null as 'delete-section' | 'delete-media' | 'delete-message' | null,
     media: null as MediaAsset | null,
+    contactMessage: null as ContactMessage | null,
   };
   private readonly memberPhotoFiles = new WeakMap<object, File>();
   private readonly eventImageFiles = new WeakMap<object, File[]>();
@@ -105,6 +109,8 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.tokenExpiresAt = 0;
     this.sections = [];
     this.mediaAssets = [];
+    this.contactMessages = [];
+    this.selectedMessage = null;
     this.selected = null;
     this.pendingFile = null;
     this.selectedMediaId = null;
@@ -154,6 +160,7 @@ export class AdminComponent implements OnInit, OnDestroy {
       },
     });
     this.loadMedia();
+    this.loadMessages();
   }
 
   loadMedia(): void {
@@ -167,6 +174,81 @@ export class AdminComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.mediaAssets = [];
+      },
+    });
+  }
+
+  loadMessages(): void {
+    if (!this.isAuthenticated()) {
+      return;
+    }
+
+    this.isLoadingMessages = true;
+    this.api.getAdminMessages(this.authToken).subscribe({
+      next: (messages) => {
+        this.contactMessages = messages;
+        this.isLoadingMessages = false;
+      },
+      error: (error) => {
+        this.contactMessages = [];
+        this.setGlobalError(
+          this.errorMessage(
+            error,
+            this.i18n.language() === 'fr' ? 'Chargement des messages impossible.' : 'Unable to load messages.',
+          ),
+        );
+        this.isLoadingMessages = false;
+      },
+    });
+  }
+
+  openMessageDetail(message: ContactMessage): void {
+    this.selectedMessage = message;
+  }
+
+  closeMessageDetail(): void {
+    this.selectedMessage = null;
+  }
+
+  confirmDeleteMessage(message: ContactMessage): void {
+    this.confirmDialog = {
+      open: true,
+      title: this.i18n.language() === 'fr' ? 'Supprimer le message' : 'Delete message',
+      message:
+        this.i18n.language() === 'fr'
+          ? `Le message "${message.subject}" sera supprime definitivement.`
+          : `The message "${message.subject}" will be permanently deleted.`,
+      confirmText: this.i18n.language() === 'fr' ? 'Supprimer' : 'Delete',
+      action: 'delete-message',
+      media: null,
+      contactMessage: message,
+    };
+  }
+
+  private deleteMessageNow(): void {
+    const message = this.confirmDialog.contactMessage;
+    if (!message?.id) {
+      this.closeConfirmDialog();
+      return;
+    }
+
+    this.api.deleteMessage(this.authToken, message.id).subscribe({
+      next: () => {
+        this.contactMessages = this.contactMessages.filter((item) => item.id !== message.id);
+        if (this.selectedMessage?.id === message.id) {
+          this.selectedMessage = null;
+        }
+        this.setGlobalStatus(this.i18n.language() === 'fr' ? 'Message supprime.' : 'Message deleted.');
+        this.closeConfirmDialog();
+      },
+      error: (error) => {
+        this.setGlobalError(
+          this.errorMessage(
+            error,
+            this.i18n.language() === 'fr' ? 'Suppression du message impossible.' : 'Unable to delete message.',
+          ),
+        );
+        this.closeConfirmDialog();
       },
     });
   }
@@ -274,6 +356,7 @@ export class AdminComponent implements OnInit, OnDestroy {
       confirmText: this.i18n.language() === 'fr' ? 'Supprimer' : 'Delete',
       action: 'delete-section',
       media: null,
+      contactMessage: null,
     };
   }
 
@@ -285,6 +368,11 @@ export class AdminComponent implements OnInit, OnDestroy {
 
     if (this.confirmDialog.action === 'delete-media') {
       this.deleteMediaNow();
+      return;
+    }
+
+    if (this.confirmDialog.action === 'delete-message') {
+      this.deleteMessageNow();
     }
   }
 
@@ -292,6 +380,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.confirmDialog.open = false;
     this.confirmDialog.action = null;
     this.confirmDialog.media = null;
+    this.confirmDialog.contactMessage = null;
   }
 
   private deleteSectionNow(): void {
@@ -526,6 +615,7 @@ export class AdminComponent implements OnInit, OnDestroy {
       confirmText: this.i18n.language() === 'fr' ? 'Supprimer' : 'Delete',
       action: 'delete-media',
       media,
+      contactMessage: null,
     };
   }
 
