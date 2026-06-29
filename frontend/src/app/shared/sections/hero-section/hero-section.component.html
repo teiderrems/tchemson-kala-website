@@ -29,7 +29,15 @@
       </div>
     </div>
     <div class="relative pb-8 sm:pb-0">
-      <img class="aspect-4/3 w-full rounded-3xl border-4 border-white object-cover shadow-2xl sm:aspect-square sm:rounded-4xl sm:border-8 lg:max-h-140" [src]="section?.media?.url" [alt]="section?.media?.alt_text">
+      <img
+        class="aspect-4/3 w-full rounded-3xl border-4 border-white bg-white shadow-2xl sm:aspect-square sm:rounded-4xl sm:border-8 lg:max-h-140"
+        [class.object-contain]="isDefaultImage()"
+        [class.object-cover]="!isDefaultImage()"
+        [class.p-6]="isDefaultImage()"
+        [class.sm:p-10]="isDefaultImage()"
+        [src]="imageUrl()"
+        [alt]="imageAlt()"
+      >
       <div class="absolute bottom-0 left-3 max-w-[calc(100%-24px)] rounded-2xl bg-white/90 p-4 shadow-xl backdrop-blur sm:-bottom-6 sm:-left-3 sm:max-w-none sm:p-5">
         <div class="flex items-center gap-3">
           <span class="material-symbols-outlined shrink-0 rounded-full bg-secondary p-3 text-white">emoji_events</span>

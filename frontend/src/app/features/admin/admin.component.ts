@@ -22,6 +22,7 @@ type EditableSection = PageSection & { contentText: string; status?: string; err
 export class AdminComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
   private readonly i18n = inject(I18nService);
+  readonly defaultImageUrl = '/assets/logo.jpeg';
 
   username = localStorage.getItem('adminUsername') ?? 'admin';
   password = '';
@@ -453,6 +454,22 @@ export class AdminComponent implements OnInit, OnDestroy {
     return typeof value === 'string' ? value : '';
   }
 
+  previewImageUrl(url: unknown): string {
+    return typeof url === 'string' && url ? url : this.defaultImageUrl;
+  }
+
+  selectedMediaUrl(): string {
+    return this.selected?.media?.url || this.defaultImageUrl;
+  }
+
+  selectedMediaAlt(): string {
+    return this.selected?.media?.alt_text || this.selected?.title_fr || 'Tchemson-Kala';
+  }
+
+  isDefaultPreview(url: unknown): boolean {
+    return !(typeof url === 'string' && url) || url === this.defaultImageUrl;
+  }
+
   detachMedia(): void {
     if (!this.selected) {
       return;
@@ -504,8 +521,8 @@ export class AdminComponent implements OnInit, OnDestroy {
       title: this.i18n.language() === 'fr' ? 'Supprimer l image' : 'Delete image',
       message:
         this.i18n.language() === 'fr'
-          ? `L image "${media.filename}" sera supprimee definitivement si elle n est utilisee dans aucune section.`
-          : `The image "${media.filename}" will be permanently deleted if it is not used in any section.`,
+          ? `L image "${media.filename}" sera supprimee definitivement. Elle sera automatiquement detachee des sections, evenements, membres et arriere-plans qui l utilisent.`
+          : `The image "${media.filename}" will be permanently deleted. It will be automatically detached from sections, events, team members and backgrounds using it.`,
       confirmText: this.i18n.language() === 'fr' ? 'Supprimer' : 'Delete',
       action: 'delete-media',
       media,
@@ -527,10 +544,16 @@ export class AdminComponent implements OnInit, OnDestroy {
           this.selectedMediaId = null;
           this.altText = '';
         }
-        this.sections = this.sections.map((section) =>
-          section.media?.id === media.id ? { ...section, media: null, contentText: JSON.stringify(section.content, null, 2) } : section,
+        this.sections = this.sections.map((section) => this.sectionWithoutMedia(section, media));
+        if (this.selected) {
+          const synced = this.sections.find((section) => section.id === this.selected?.id || section.key === this.selected?.key);
+          this.selected = synced ?? this.selected;
+        }
+        this.setSelectedStatus(
+          this.i18n.language() === 'fr'
+            ? 'Image supprimee et retiree des contenus qui l utilisaient.'
+            : 'Image deleted and removed from content that used it.',
         );
-        this.setSelectedStatus(this.i18n.language() === 'fr' ? 'Image supprimee de la base.' : 'Image deleted from the database.');
         this.closeConfirmDialog();
       },
       error: (error) => {
@@ -538,13 +561,58 @@ export class AdminComponent implements OnInit, OnDestroy {
           this.errorMessage(
             error,
             this.i18n.language() === 'fr'
-              ? 'Suppression impossible. Detachez l image des sections qui l utilisent.'
-              : 'Unable to delete. Detach the image from sections using it.',
+              ? 'Suppression impossible.'
+              : 'Unable to delete.',
           ),
         );
         this.closeConfirmDialog();
       },
     });
+  }
+
+  private sectionWithoutMedia(section: EditableSection, media: MediaAsset): EditableSection {
+    const content = this.removeMediaReferences(section.content, media);
+    const updated: EditableSection = {
+      ...section,
+      media: section.media?.id === media.id ? null : section.media,
+      content,
+      contentText: JSON.stringify(content, null, 2),
+    };
+    return updated;
+  }
+
+  private removeMediaReferences(value: any, media: MediaAsset): any {
+    const mediaUrl = media.url;
+
+    if (Array.isArray(value)) {
+      return value
+        .filter((item) => !(item && typeof item === 'object' && (item.mediaId === media.id || item.url === mediaUrl)))
+        .map((item) => this.removeMediaReferences(item, media));
+    }
+
+    if (!value || typeof value !== 'object') {
+      return value;
+    }
+
+    const cleaned: Record<string, any> = { ...value };
+    if (cleaned['photoMediaId'] === media.id || cleaned['photoUrl'] === mediaUrl) {
+      cleaned['photoMediaId'] = null;
+      cleaned['photoUrl'] = '';
+      cleaned['photoAlt'] = '';
+    }
+
+    for (const prefix of ['backgroundImage', 'appBackgroundImage']) {
+      const urlKey = `${prefix}Url`;
+      if (cleaned[urlKey] === mediaUrl) {
+        delete cleaned[urlKey];
+        delete cleaned[`${prefix}Alt`];
+      }
+    }
+
+    for (const [key, item] of Object.entries(cleaned)) {
+      cleaned[key] = this.removeMediaReferences(item, media);
+    }
+    return cleaned;
   }
 
   formatContentJson(): void {

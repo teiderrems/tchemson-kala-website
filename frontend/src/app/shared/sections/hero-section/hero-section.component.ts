@@ -13,6 +13,7 @@ import { ScrollRevealDirective } from '../../directives/scroll-reveal.directive'
   templateUrl: './hero-section.component.html',
 })
 export class HeroSectionComponent {
+  readonly defaultImageUrl = '/assets/logo.jpeg';
   private readonly i18n = inject(I18nService);
 
   @Input() section: PageSection | undefined;
@@ -47,6 +48,18 @@ export class HeroSectionComponent {
   arrayContent(key: string): any[] {
     const value = this.section?.content?.[key];
     return Array.isArray(value) ? value : [];
+  }
+
+  imageUrl(): string {
+    return this.section?.media?.url || this.defaultImageUrl;
+  }
+
+  imageAlt(): string {
+    return this.section?.media?.alt_text || this.title() || 'Tchemson-Kala';
+  }
+
+  isDefaultImage(): boolean {
+    return !this.section?.media?.url;
   }
 
   backgroundStyle(): Record<string, string> {

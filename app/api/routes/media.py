@@ -28,6 +28,50 @@ def content_references_media(value: object, media_id: int) -> bool:
     return value == media_url
 
 
+def remove_media_references(value: object, media_id: int) -> tuple[object, bool]:
+    media_url = f"/api/media/{media_id}/bytes"
+
+    if isinstance(value, list):
+        changed = False
+        cleaned_items: list[object] = []
+        for item in value:
+            if isinstance(item, dict) and (item.get("mediaId") == media_id or item.get("url") == media_url):
+                changed = True
+                continue
+
+            cleaned_item, item_changed = remove_media_references(item, media_id)
+            changed = changed or item_changed
+            cleaned_items.append(cleaned_item)
+        return cleaned_items, changed
+
+    if isinstance(value, dict):
+        changed = False
+        cleaned = dict(value)
+
+        if cleaned.get("photoMediaId") == media_id or cleaned.get("photoUrl") == media_url:
+            cleaned["photoMediaId"] = None
+            cleaned["photoUrl"] = ""
+            cleaned["photoAlt"] = ""
+            changed = True
+
+        for prefix in ("backgroundImage", "appBackgroundImage"):
+            url_key = f"{prefix}Url"
+            if cleaned.get(url_key) == media_url:
+                for key in (url_key, f"{prefix}Alt"):
+                    cleaned.pop(key, None)
+                changed = True
+
+        for key, item in list(cleaned.items()):
+            cleaned_item, item_changed = remove_media_references(item, media_id)
+            if item_changed:
+                cleaned[key] = cleaned_item
+                changed = True
+
+        return cleaned, changed
+
+    return value, False
+
+
 @router.get("/admin/media", response_model=list[MediaAssetRead], dependencies=[Depends(require_admin)])
 async def list_media(session: AsyncSession = Depends(get_session)) -> list[MediaAssetRead]:
     result = await session.execute(select(MediaAsset).order_by(MediaAsset.created_at.desc(), MediaAsset.id.desc()))
@@ -77,17 +121,14 @@ async def delete_media(media_id: int, session: AsyncSession = Depends(get_sessio
     if not media:
         raise HTTPException(status_code=404, detail="Media not found")
 
-    used_by_section = await session.scalar(select(PageSection.id).where(PageSection.media_id == media_id).limit(1))
-    if used_by_section:
-        raise HTTPException(status_code=409, detail="Media is still used by a section")
-
     sections_result = await session.execute(select(PageSection))
-    used_in_content = next(
-        (section.key for section in sections_result.scalars() if content_references_media(section.content, media_id)),
-        "",
-    )
-    if used_in_content:
-        raise HTTPException(status_code=409, detail=f"Media is still referenced in section content: {used_in_content}")
+    for section in sections_result.scalars():
+        if section.media_id == media_id:
+            section.media_id = None
+
+        cleaned_content, changed = remove_media_references(section.content, media_id)
+        if changed:
+            section.content = cleaned_content
 
     await session.delete(media)
     await session.commit()

@@ -56,7 +56,7 @@
                   </article>
                 </div>
               </div>
-              <img class="aspect-4/3 w-full rounded-3xl object-cover shadow-xl sm:rounded-4xl" [src]="section.media?.url" [alt]="section.media?.alt_text">
+              <img class="aspect-4/3 w-full rounded-3xl bg-white shadow-xl sm:rounded-4xl" [class.object-contain]="isDefaultSectionImage()" [class.object-cover]="!isDefaultSectionImage()" [class.p-6]="isDefaultSectionImage()" [src]="sectionImageUrl()" [alt]="sectionImageAlt()">
             </div>
 
             <div>
@@ -67,10 +67,7 @@
               <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <article *ngFor="let member of arrayContent('team')" class="rounded-3xl border border-outline-variant/30 bg-white p-6 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
                   <div class="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-primary/20 bg-surface-container-low text-primary">
-                    <img *ngIf="member.photoUrl; else teamMemberIcon" class="h-full w-full object-cover" [src]="member.photoUrl" [alt]="member.photoAlt || member.name">
-                    <ng-template #teamMemberIcon>
-                      <span class="material-symbols-outlined text-5xl">{{ member.icon || 'person' }}</span>
-                    </ng-template>
+                    <img class="h-full w-full bg-white" [class.object-contain]="isDefaultMemberPhoto(member)" [class.object-cover]="!isDefaultMemberPhoto(member)" [class.p-2]="isDefaultMemberPhoto(member)" [src]="memberPhotoUrl(member)" [alt]="memberPhotoAlt(member)">
                   </div>
                   <h4 class="mt-5 font-display text-xl font-bold text-primary">{{ text(member.name) }}</h4>
                   <p class="mt-2 text-sm font-bold uppercase text-secondary">{{ text(member.role) }}</p>
@@ -126,7 +123,7 @@
                   </article>
                 </div>
               </div>
-              <img class="aspect-square w-full rounded-3xl object-cover shadow-xl sm:rounded-4xl" [src]="section.media?.url" [alt]="section.media?.alt_text">
+              <img class="aspect-square w-full rounded-3xl bg-white shadow-xl sm:rounded-4xl" [class.object-contain]="isDefaultSectionImage()" [class.object-cover]="!isDefaultSectionImage()" [class.p-6]="isDefaultSectionImage()" [src]="sectionImageUrl()" [alt]="sectionImageAlt()">
             </div>
 
             <div>
@@ -176,7 +173,7 @@
               </div>
               <div class="mt-6 grid gap-4">
                 <button *ngFor="let event of arrayContent('current')" class="block w-full rounded-2xl border border-outline-variant/40 bg-surface-container-low p-0 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg" type="button" (click)="openEventDetail(event)">
-                  <img *ngIf="eventImages(event)[0]" class="aspect-video w-full rounded-t-2xl object-cover" [src]="eventImages(event)[0].url" [alt]="text(eventImages(event)[0].altText || event.title)">
+                  <img *ngIf="eventImages(event)[0]" class="aspect-video w-full rounded-t-2xl bg-white" [class.object-contain]="isDefaultEventImage(eventImages(event)[0])" [class.object-cover]="!isDefaultEventImage(eventImages(event)[0])" [class.p-4]="isDefaultEventImage(eventImages(event)[0])" [src]="eventImages(event)[0].url" [alt]="text(eventImages(event)[0].altText || event.title)">
                   <div class="p-4 sm:p-5">
                   <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <h4 class="font-display text-lg font-bold text-primary">{{ text(event.title) }}</h4>
@@ -200,7 +197,7 @@
               </div>
               <div class="mt-6 grid gap-4">
                 <button *ngFor="let event of arrayContent('scheduled')" class="block w-full rounded-2xl bg-white p-0 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg" type="button" (click)="openEventDetail(event)">
-                  <img *ngIf="eventImages(event)[0]" class="aspect-video w-full rounded-t-2xl object-cover" [src]="eventImages(event)[0].url" [alt]="text(eventImages(event)[0].altText || event.title)">
+                  <img *ngIf="eventImages(event)[0]" class="aspect-video w-full rounded-t-2xl bg-white" [class.object-contain]="isDefaultEventImage(eventImages(event)[0])" [class.object-cover]="!isDefaultEventImage(eventImages(event)[0])" [class.p-4]="isDefaultEventImage(eventImages(event)[0])" [src]="eventImages(event)[0].url" [alt]="text(eventImages(event)[0].altText || event.title)">
                   <div class="p-4 sm:p-5">
                   <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <h4 class="font-display text-lg font-bold text-primary">{{ text(event.title) }}</h4>
@@ -221,7 +218,7 @@
           <div *ngIf="selectedEvent" class="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/60 p-4" role="dialog" aria-modal="true" (click)="closeEventDetail()">
             <article class="max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl" (click)="$event.stopPropagation()">
               <div class="relative bg-surface-container-low">
-                <img *ngIf="eventImages(selectedEvent)[selectedEventImageIndex]" class="aspect-video w-full object-cover" [src]="eventImages(selectedEvent)[selectedEventImageIndex].url" [alt]="text(eventImages(selectedEvent)[selectedEventImageIndex].altText || selectedEvent.title)">
+                <img *ngIf="eventImages(selectedEvent)[selectedEventImageIndex]" class="aspect-video w-full bg-white" [class.object-contain]="isDefaultEventImage(eventImages(selectedEvent)[selectedEventImageIndex])" [class.object-cover]="!isDefaultEventImage(eventImages(selectedEvent)[selectedEventImageIndex])" [class.p-6]="isDefaultEventImage(eventImages(selectedEvent)[selectedEventImageIndex])" [src]="eventImages(selectedEvent)[selectedEventImageIndex].url" [alt]="text(eventImages(selectedEvent)[selectedEventImageIndex].altText || selectedEvent.title)">
                 <div *ngIf="!eventImages(selectedEvent).length" class="flex aspect-video items-center justify-center bg-surface-container-high text-primary">
                   <span class="material-symbols-outlined text-6xl">event</span>
                 </div>
@@ -249,7 +246,7 @@
                 <p class="mt-6 leading-8 text-on-surface-variant">{{ text(selectedEvent.description) }}</p>
                 <div *ngIf="eventImages(selectedEvent).length > 1" class="mt-6 flex gap-3 overflow-x-auto pb-2">
                   <button *ngFor="let image of eventImages(selectedEvent); let imageIndex = index" class="h-20 w-28 shrink-0 overflow-hidden rounded-xl border-2" [class.border-primary]="imageIndex === selectedEventImageIndex" [class.border-transparent]="imageIndex !== selectedEventImageIndex" type="button" (click)="selectedEventImageIndex = imageIndex">
-                    <img class="h-full w-full object-cover" [src]="image.url" [alt]="text(image.altText || selectedEvent.title)">
+                    <img class="h-full w-full bg-white" [class.object-contain]="isDefaultEventImage(image)" [class.object-cover]="!isDefaultEventImage(image)" [class.p-2]="isDefaultEventImage(image)" [src]="image.url" [alt]="text(image.altText || selectedEvent.title)">
                   </button>
                 </div>
               </div>
@@ -280,7 +277,7 @@
           </div>
 
           <div *ngSwitchDefault class="rounded-3xl bg-white p-5 shadow-sm sm:rounded-4xl sm:p-8">
-            <img *ngIf="section.media" class="mb-6 max-h-96 w-full rounded-3xl object-cover" [src]="section.media.url" [alt]="section.media.alt_text">
+            <img class="mb-6 max-h-96 w-full rounded-3xl bg-white" [class.object-contain]="isDefaultSectionImage()" [class.object-cover]="!isDefaultSectionImage()" [class.p-6]="isDefaultSectionImage()" [src]="sectionImageUrl()" [alt]="sectionImageAlt()">
             <pre class="overflow-auto rounded-xl bg-surface-container-low p-4 text-sm">{{ section.content | json }}</pre>
           </div>
         </ng-container>

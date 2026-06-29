@@ -6,11 +6,12 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { I18nService } from './core/i18n.service';
 import { ApiService } from './core/api.service';
 import { TranslatePipe } from './core/translate.pipe';
+import { InteractiveHelpComponent } from './shared/components/interactive-help/interactive-help.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe, InteractiveHelpComponent],
   templateUrl: './app.component.html',
   animations: [
     trigger('routeAnimations', [

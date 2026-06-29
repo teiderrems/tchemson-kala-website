@@ -31,8 +31,8 @@
           <div *ngIf="isAuthenticated()" class="w-full rounded-2xl bg-white p-4 shadow-sm lg:w-auto">
             <div class="text-sm font-bold text-on-surface-variant">{{ 'admin.connectedAs' | translate }} {{ username }}</div>
             <div class="mt-2 flex flex-col gap-2 sm:flex-row">
-              <button class="rounded-xl bg-primary px-5 py-3 font-bold text-white" type="button" (click)="load()">{{ 'admin.load' | translate }}</button>
-              <button class="rounded-xl border border-secondary px-5 py-3 font-bold text-secondary" type="button" (click)="logout()">{{ 'admin.logout' | translate }}</button>
+              <button class="rounded-xl bg-primary px-5 py-3 font-bold text-white" type="button" (click)="load()" [attr.title]="'help.admin.actions.1' | translate">{{ 'admin.load' | translate }}</button>
+              <button class="rounded-xl border border-secondary px-5 py-3 font-bold text-secondary" type="button" (click)="logout()" [attr.title]="'admin.logout' | translate">{{ 'admin.logout' | translate }}</button>
             </div>
           </div>
         </div>
@@ -79,7 +79,7 @@
         <aside class="rounded-3xl bg-white p-4 shadow-sm">
           <div class="flex items-center justify-between gap-3 px-3">
             <h2 class="font-display text-xl font-bold text-primary">{{ 'admin.sections' | translate }}</h2>
-            <button class="rounded-xl bg-primary px-3 py-2 text-sm font-bold text-white" type="button" (click)="createSection()">{{ 'admin.add' | translate }}</button>
+            <button class="rounded-xl bg-primary px-3 py-2 text-sm font-bold text-white" type="button" (click)="createSection()" [attr.title]="'help.admin.actions.2' | translate">{{ 'admin.add' | translate }}</button>
           </div>
           <button
             *ngFor="let section of sections"
@@ -106,7 +106,7 @@
                 <input type="checkbox" [(ngModel)]="selected.published" name="published">
                 {{ 'admin.published' | translate }}
               </label>
-              <button class="rounded-xl bg-primary px-6 py-3 font-bold text-white" type="submit">{{ 'admin.save' | translate }}</button>
+              <button class="rounded-xl bg-primary px-6 py-3 font-bold text-white" type="submit" [attr.title]="'help.admin.actions.3' | translate">{{ 'admin.save' | translate }}</button>
             </div>
           </div>
 
@@ -174,10 +174,7 @@
                     <div class="grid gap-4 lg:grid-cols-[160px_1fr]">
                       <div>
                         <div class="flex aspect-square items-center justify-center overflow-hidden rounded-3xl bg-surface-container-low text-primary">
-                          <img *ngIf="member.photoUrl; else memberIcon" class="h-full w-full object-cover" [src]="member.photoUrl" [alt]="member.photoAlt || member.name">
-                          <ng-template #memberIcon>
-                            <span class="material-symbols-outlined text-5xl">{{ member.icon || 'person' }}</span>
-                          </ng-template>
+                          <img class="h-full w-full bg-white" [class.object-contain]="isDefaultPreview(member.photoUrl)" [class.object-cover]="!isDefaultPreview(member.photoUrl)" [class.p-3]="isDefaultPreview(member.photoUrl)" [src]="previewImageUrl(member.photoUrl)" [alt]="member.photoAlt || member.name || 'Tchemson-Kala'">
                         </div>
 
                         <label class="mt-3 block">
@@ -264,7 +261,7 @@
                   <div *ngSwitchCase="'settings'" class="grid gap-4">
                     <p class="rounded-2xl bg-surface-container-low p-4 text-sm text-on-surface-variant">{{ 'admin.globalBackgroundHelp' | translate }}</p>
                     <div class="overflow-hidden rounded-2xl bg-surface-container-low shadow-sm" *ngIf="contentField('appBackgroundImageUrl'); else noAppBackground">
-                      <img class="aspect-video w-full object-cover" [src]="contentField('appBackgroundImageUrl')" [alt]="'admin.appBackgroundImage' | translate">
+                      <img class="aspect-video w-full object-cover" [src]="previewImageUrl(contentField('appBackgroundImageUrl'))" [alt]="'admin.appBackgroundImage' | translate">
                     </div>
                     <ng-template #noAppBackground>
                       <p class="rounded-2xl bg-surface-container-low p-4 text-sm text-on-surface-variant">{{ 'admin.noBackgroundImage' | translate }}</p>
@@ -402,7 +399,7 @@
                             </button>
                             <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" *ngIf="eventImages(event).length">
                               <div *ngFor="let image of eventImages(event); let imageIndex = index" class="overflow-hidden rounded-xl bg-white shadow-sm">
-                                <img class="aspect-video w-full object-cover" [src]="image.url" [alt]="image.altText || event.title">
+                                <img class="aspect-video w-full object-cover" [src]="previewImageUrl(image.url)" [alt]="image.altText || event.title">
                                 <button class="w-full px-3 py-2 text-sm font-bold text-secondary" type="button" (click)="removeEventImage(event, imageIndex)">{{ 'admin.remove' | translate }}</button>
                               </div>
                             </div>
@@ -449,7 +446,7 @@
                             </button>
                             <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" *ngIf="eventImages(event).length">
                               <div *ngFor="let image of eventImages(event); let imageIndex = index" class="overflow-hidden rounded-xl bg-white shadow-sm">
-                                <img class="aspect-video w-full object-cover" [src]="image.url" [alt]="image.altText || event.title">
+                                <img class="aspect-video w-full object-cover" [src]="previewImageUrl(image.url)" [alt]="image.altText || event.title">
                                 <button class="w-full px-3 py-2 text-sm font-bold text-secondary" type="button" (click)="removeEventImage(event, imageIndex)">{{ 'admin.remove' | translate }}</button>
                               </div>
                             </div>
@@ -494,7 +491,7 @@
             <aside class="space-y-5">
               <div class="rounded-3xl bg-surface-container-low p-5">
                 <h3 class="font-display text-xl font-bold text-primary">{{ 'admin.image' | translate }}</h3>
-                <img *ngIf="selected.media" class="mt-4 aspect-video w-full rounded-2xl object-cover" [src]="selected.media.url" [alt]="selected.media.alt_text">
+                <img class="mt-4 aspect-video w-full rounded-2xl bg-white" [class.object-contain]="!selected.media" [class.object-cover]="selected.media" [class.p-6]="!selected.media" [src]="selectedMediaUrl()" [alt]="selectedMediaAlt()">
                 <p class="mt-2 text-sm text-on-surface-variant" *ngIf="selected.media">{{ selected.media.filename }}</p>
 
                 <label class="mt-4 block">
@@ -521,11 +518,11 @@
                   <span class="min-w-0 wrap-break-word">{{ pendingFile.name }}</span>
                 </p>
                 <input class="mt-3 w-full rounded-xl border border-outline-variant bg-white p-3" [(ngModel)]="altText" name="altText" [placeholder]="'admin.altText' | translate">
-                <button class="mt-3 w-full rounded-xl bg-secondary px-4 py-3 font-bold text-white" type="button" (click)="uploadSelectedImage()">{{ 'admin.uploadAndAttach' | translate }}</button>
+                <button class="mt-3 w-full rounded-xl bg-secondary px-4 py-3 font-bold text-white" type="button" (click)="uploadSelectedImage()" [attr.title]="'help.admin.actions.4' | translate">{{ 'admin.uploadAndAttach' | translate }}</button>
                 <button class="mt-3 w-full rounded-xl border border-primary px-4 py-3 font-bold text-primary" type="button" (click)="saveMediaMetadata()" [disabled]="!selected.media">{{ 'admin.saveAltText' | translate }}</button>
                 <div class="mt-3 grid gap-3 sm:grid-cols-2">
                   <button class="rounded-xl border border-secondary px-4 py-3 font-bold text-secondary disabled:opacity-60" type="button" (click)="detachMedia()" [disabled]="!selected.media">{{ 'admin.detachImage' | translate }}</button>
-                  <button class="rounded-xl border border-error px-4 py-3 font-bold text-error disabled:opacity-60" type="button" (click)="deleteSelectedMedia()" [disabled]="!selected.media">{{ 'admin.deleteImage' | translate }}</button>
+                  <button class="rounded-xl border border-error px-4 py-3 font-bold text-error disabled:opacity-60" type="button" (click)="deleteSelectedMedia()" [disabled]="!selected.media" [attr.title]="'help.admin.actions.5' | translate">{{ 'admin.deleteImage' | translate }}</button>
                 </div>
 
                 <div class="my-5 h-px bg-outline-variant/50"></div>
@@ -534,12 +531,12 @@
                 <div class="admin-scroll mt-3 grid max-h-96 gap-3 overflow-y-auto pr-2" *ngIf="mediaAssets.length; else emptyMediaLibrary">
                   <article
                     *ngFor="let media of mediaAssets"
-                    class="grid min-w-0 grid-cols-[64px_minmax(0,1fr)] gap-3 rounded-2xl border border-outline-variant/30 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:grid-cols-[76px_minmax(0,1fr)]"
+                    class="grid min-w-0 grid-cols-[64px_minmax(0,1fr)] gap-3 rounded-2xl border border-outline-variant/30 bg-white p-2.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                     [class.ring-2]="selected.media?.id === media.id"
                     [class.ring-primary]="selected.media?.id === media.id"
                   >
                     <div class="overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-low">
-                      <img class="h-16 w-16 object-cover sm:h-18 sm:w-19" [src]="media.url" [alt]="media.alt_text || media.filename">
+                      <img class="h-16 w-16 object-cover" [src]="media.url" [alt]="media.alt_text || media.filename">
                     </div>
                     <div class="min-w-0">
                       <div class="flex items-start justify-between gap-2">
@@ -549,9 +546,9 @@
                         </div>
                         <span class="material-symbols-outlined shrink-0 text-lg text-primary" *ngIf="selected.media?.id === media.id" [attr.title]="'admin.attachedImage' | translate">check_circle</span>
                       </div>
-                      <div class="mt-3 flex min-w-0 flex-wrap items-center gap-2">
+                      <div class="mt-3 grid min-w-0 grid-cols-[minmax(0,1fr)_40px] items-center gap-2">
                         <button
-                          class="inline-flex h-10 min-w-0 flex-1 basis-24 items-center justify-center gap-1.5 rounded-xl border border-primary px-2 text-xs font-bold text-primary transition hover:bg-primary hover:text-white disabled:opacity-60"
+                          class="inline-flex h-10 min-w-0 items-center justify-center gap-1.5 rounded-xl border border-primary px-2 text-xs font-bold text-primary transition hover:bg-primary hover:text-white disabled:opacity-60"
                           type="button"
                           (click)="selectedMediaId = media.id; attachExistingMedia()"
                           [disabled]="selected.media?.id === media.id"
@@ -581,7 +578,7 @@
 
                 <h4 class="font-display text-lg font-bold text-primary">{{ 'admin.backgroundImage' | translate }}</h4>
                 <div class="mt-3 overflow-hidden rounded-2xl bg-white shadow-sm" *ngIf="backgroundImageUrl(); else noBackgroundImage">
-                  <img class="aspect-video w-full object-cover" [src]="backgroundImageUrl()" [alt]="'admin.backgroundImage' | translate">
+                  <img class="aspect-video w-full bg-white" [class.object-contain]="isDefaultPreview(backgroundImageUrl())" [class.object-cover]="!isDefaultPreview(backgroundImageUrl())" [class.p-6]="isDefaultPreview(backgroundImageUrl())" [src]="previewImageUrl(backgroundImageUrl())" [alt]="'admin.backgroundImage' | translate">
                 </div>
                 <ng-template #noBackgroundImage>
                   <p class="mt-3 rounded-2xl bg-white p-4 text-sm text-on-surface-variant">{{ 'admin.noBackgroundImage' | translate }}</p>

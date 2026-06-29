@@ -15,6 +15,7 @@ import { ScrollRevealDirective } from '../../directives/scroll-reveal.directive'
   templateUrl: './content-section.component.html',
 })
 export class ContentSectionComponent implements OnDestroy {
+  readonly defaultImageUrl = '/assets/logo.jpeg';
   private readonly api = inject(ApiService);
   private readonly i18n = inject(I18nService);
   private readonly document = inject(DOCUMENT);
@@ -58,6 +59,30 @@ export class ContentSectionComponent implements OnDestroy {
     return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, any>) : {};
   }
 
+  sectionImageUrl(): string {
+    return this.section.media?.url || this.defaultImageUrl;
+  }
+
+  sectionImageAlt(): string {
+    return this.section.media?.alt_text || this.title() || 'Tchemson-Kala';
+  }
+
+  isDefaultSectionImage(): boolean {
+    return !this.section.media?.url;
+  }
+
+  memberPhotoUrl(member: any): string {
+    return member?.photoUrl || this.defaultImageUrl;
+  }
+
+  memberPhotoAlt(member: any): string {
+    return member?.photoAlt || member?.name || 'Tchemson-Kala';
+  }
+
+  isDefaultMemberPhoto(member: any): boolean {
+    return !member?.photoUrl;
+  }
+
   backgroundStyle(): Record<string, string> {
     const url = this.content('backgroundImageUrl');
     return url
@@ -74,7 +99,11 @@ export class ContentSectionComponent implements OnDestroy {
     if (images.length) {
       return images.filter((image) => image?.url);
     }
-    return this.section.media?.url ? [{ url: this.section.media.url, altText: this.section.media.alt_text }] : [];
+    return [{ url: this.sectionImageUrl(), altText: this.sectionImageAlt(), isDefault: this.isDefaultSectionImage() }];
+  }
+
+  isDefaultEventImage(image: any): boolean {
+    return Boolean(image?.isDefault) || !image?.url || image?.url === this.defaultImageUrl;
   }
 
   openEventDetail(event: any): void {
